@@ -80,10 +80,6 @@ export function throttling(octokit, octokitOptions = {}) {
     events.on("abuse-limit", state.onAbuseLimit);
     // @ts-ignore
     events.on("rate-limit", state.onRateLimit);
-    if (typeof state.onTimeout === "function") {
-        // @ts-ignore
-        events.on("timeout", state.onTimeout);
-    }
     // @ts-ignore
     events.on("error", (e) => console.warn("Error in throttling-plugin limit handler", e));
     // @ts-ignore
@@ -106,13 +102,6 @@ export function throttling(octokit, octokitOptions = {}) {
                 const retryAfter = Math.max(~~error.headers["retry-after"], state.minimumAbuseRetryAfter);
                 const wantRetry = await emitter.trigger("abuse-limit", retryAfter, options, octokit);
                 return { wantRetry, retryAfter };
-            }
-            if (typeof state.onTimeout === "function") {
-                if (/\ETIMEDOUT\b/i.test(error.message)) {
-                    const retryAfter = 60;
-                    const wantRetry = await emitter.trigger("timeout", retryAfter, options, octokit);
-                    return { wantRetry, retryAfter };
-                }
             }
             if (error.headers != null && "x-ratelimit-remaining" in error.headers) {
                 // The user has used all their allowed calls for the current time period (REST and GraphQL)
